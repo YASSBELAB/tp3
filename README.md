@@ -1,4 +1,114 @@
 # tp3
+## Instructions d'installation, de compilation et d'exécution
+
+## 1. Prérequis
+
+- Java JDK 27
+- Maven
+- XAMPP (MariaDB)
+- Postman
+
+## 2. Configuration de la base de données
+
+Démarrer MySQL depuis XAMPP, puis créer la base de données dans phpMyAdmin :
+
+```sql
+CREATE DATABASE lab3_db;
+```
+
+Vérifier la configuration dans `src/main/resources/application.properties` :
+
+```properties
+spring.datasource.url=jdbc:mysql://localhost:3306/lab3_db
+spring.datasource.username=root
+spring.datasource.password=
+
+spring.jpa.hibernate.ddl-auto=update
+```
+
+## 3. Compilation du projet (Build)
+
+Ouvrir un terminal à la racine du projet et exécuter :
+
+```powershell
+.\mvnw.cmd clean
+.\mvnw.cmd install
+```
+
+Ou avec Maven installé :
+
+```bash
+mvn clean install
+```
+
+## 4. Exécution du projet (Run)
+
+Pour démarrer l'application :
+
+```powershell
+.\mvnw.cmd spring-boot:run
+```
+
+Ou :
+
+```bash
+mvn spring-boot:run
+```
+
+L'application sera accessible à l'adresse :
+
+```text
+http://localhost:8080
+```
+
+## 5. Exécution des tests (Tests)
+
+Pour exécuter tous les tests :
+
+```powershell
+.\mvnw.cmd test
+```
+
+Ou :
+
+```bash
+mvn test
+```
+
+Pour exécuter les tests et générer le rapport :
+
+```powershell
+.\mvnw.cmd clean verify
+```
+
+Les rapports de tests sont générés dans :
+
+```text
+target/surefire-reports/
+```
+
+## 6. Tests avec Postman
+
+Importer la collection :
+
+```text
+postman/Lab4-Auth.postman_collection.json
+```
+
+Tester les fonctionnalités suivantes :
+
+- Inscription d'un utilisateur (`POST /api/auth/register`).
+- Connexion et génération du JWT (`POST /api/auth/login`).
+- Accès aux routes protégées avec un token valide.
+- Refus d'accès sans token ou avec un token invalide.
+- Vérification des autorisations USER, MANAGER et ADMIN.
+- Rafraîchissement du JWT (`POST /api/auth/refresh`).
+- Vérification des erreurs HTTP (400, 401, 403 et 409).
+
+**Fin de la procédure.**
+
+
+
 ## Tests des endpoints avec Postman et cURL
 « Test de l'endpoint POST /api/categories sous Postman, validant l'ajout d'une catégorie (201 Created). »
 <img width="569" height="395" alt="14tp3screenpost categ" src="https://github.com/user-attachments/assets/b7193135-d094-4590-b7da-bbba1484f87c" />
