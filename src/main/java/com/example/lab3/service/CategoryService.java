@@ -65,4 +65,31 @@ public class CategoryService {
                 ))
                 .toList();
     }
+
+    // UPDATE
+    public CategoryDto update(Long id, CategoryDto dto) {
+
+        Category category = categoryRepo.findById(id)
+                .orElseThrow(() ->
+                        new EntityNotFoundException("Category not found"));
+
+        category.setName(dto.name());
+
+        Category updated = categoryRepo.save(category);
+
+        return new CategoryDto(
+                updated.getId(),
+                updated.getName()
+        );
+    }
+
+    // DELETE
+    public void delete(Long id) {
+
+        Category category = categoryRepo.findById(id)
+                .orElseThrow(() ->
+                        new EntityNotFoundException("Category not found"));
+
+        categoryRepo.delete(category);
+    }
 }

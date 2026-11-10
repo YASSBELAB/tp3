@@ -6,17 +6,21 @@ import com.example.lab3.dto.OrderItemDto;
 import com.example.lab3.entity.Order;
 import com.example.lab3.entity.OrderItem;
 import com.example.lab3.entity.Product;
+import com.example.lab3.entity.User;
 import com.example.lab3.repository.OrderRepository;
 import com.example.lab3.repository.ProductRepository;
+import com.example.lab3.repository.UserRepository;
 
 import jakarta.persistence.EntityNotFoundException;
 
 import lombok.RequiredArgsConstructor;
 
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -26,16 +30,22 @@ public class OrderService {
 
     private final OrderRepository orderRepo;
     private final ProductRepository productRepo;
+    private final UserRepository userRepo;
 
-    // CREATE ORDER
-    public OrderDto create(OrderDto dto) {
+    // CREATE ORDER - USER only (authorization is in controller)
+    public OrderDto create(String username, OrderDto dto) {
+
+        User user = userRepo.findByUsername(username)
+                .orElseThrow(() ->
+                        new EntityNotFoundException("User not found"));
 
         Order order = new Order(
                 null,
                 dto.orderDate() != null
                         ? dto.orderDate()
                         : LocalDateTime.now(),
-                new java.util.ArrayList<>()
+                new ArrayList<>(),
+                user
         );
 
         for (OrderItemDto itemDto : dto.items()) {
@@ -56,29 +66,65 @@ public class OrderService {
 
         Order saved = orderRepo.save(order);
 
-        List<OrderItemDto> items = saved.getItems()
-                .stream()
-                .map(item -> new OrderItemDto(
-                        item.getId(),
-                        item.getProduct().getId(),
-                        item.getQuantity()
-                ))
-                .toList();
+        return toDto(saved);
+    }
 
-        return new OrderDto(
-                saved.getId(),
-                saved.getOrderDate(),
-                items
-        );
+    // GET ALL ORDERS - ADMIN and MANAGER
+    @Transactional(readOnly = true)
+    public List<OrderDto> findAll() {
+
+        return orderRepo.findAll()
+                .stream()
+                .map(this::toDto)
+                .toList();
+    }
+
+    // GET ORDERS BY USERNAME - USER only
+    @Transactional(readOnly = true)
+    public List<OrderDto> findByUsername(String username) {
+
+        return orderRepo.findByUser_Username(username)
+                .stream()
+                .map(this::toDto)
+                .toList();
     }
 
     // GET ORDER BY ID
+    // ADMIN and MANAGER can access all orders.
+    // USER can access only their own orders.
     @Transactional(readOnly = true)
-    public OrderDto getById(Long id) {
+    public OrderDto getById(
+            Long id,
+            String username,
+            boolean canReadAll) {
 
         Order order = orderRepo.findById(id)
                 .orElseThrow(() ->
                         new EntityNotFoundException("Order not found"));
+
+        if (!canReadAll &&
+                !order.getUser().getUsername().equals(username)) {
+
+            throw new AccessDeniedException(
+                    "You cannot access another user's order"
+            );
+        }
+
+        return toDto(order);
+    }
+
+    // DELETE ORDER - ADMIN only (authorization is in controller)
+    public void delete(Long id) {
+
+        Order order = orderRepo.findById(id)
+                .orElseThrow(() ->
+                        new EntityNotFoundException("Order not found"));
+
+        orderRepo.delete(order);
+    }
+
+    // CONVERT ENTITY TO DTO
+    private OrderDto toDto(Order order) {
 
         List<OrderItemDto> items = order.getItems()
                 .stream()
