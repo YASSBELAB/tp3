@@ -109,6 +109,26 @@ public class ProductService {
         );
     }
 
+    // UPDATE PRICE
+    public ProductDto updatePrice(Long id, Double price) {
+
+        Product p = productRepo.findById(id)
+                .orElseThrow(() ->
+                        new EntityNotFoundException("Product not found"));
+
+        p.setPrice(price);
+        Product saved = productRepo.save(p);
+
+        return new ProductDto(
+                saved.getId(),
+                saved.getName(),
+                saved.getPrice(),
+                saved.getCategory() != null
+                        ? saved.getCategory().getId()
+                        : null
+        );
+    }
+
     // DELETE
     public void delete(Long id) {
 

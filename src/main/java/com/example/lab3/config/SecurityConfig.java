@@ -1,6 +1,6 @@
-
 package com.example.lab3.config;
 
+import com.example.lab3.security.ApiKeyFilter;
 import com.example.lab3.security.JwtAuthenticationFilter;
 
 import java.util.List;
@@ -25,9 +25,11 @@ import org.springframework.web.cors.CorsConfiguration;
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtFilter;
+    private final ApiKeyFilter apiKeyFilter;
 
-    public SecurityConfig(JwtAuthenticationFilter jwtFilter) {
+    public SecurityConfig(JwtAuthenticationFilter jwtFilter, ApiKeyFilter apiKeyFilter) {
         this.jwtFilter = jwtFilter;
+        this.apiKeyFilter = apiKeyFilter;
     }
 
     @Bean
@@ -44,7 +46,7 @@ public class SecurityConfig {
                     ));
 
                     cfg.setAllowedMethods(List.of(
-                            "GET", "POST", "PUT", "DELETE", "OPTIONS"
+                            "GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"
                     ));
 
                     cfg.setAllowedHeaders(List.of(
@@ -77,7 +79,15 @@ public class SecurityConfig {
                 )
 
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/**").permitAll()
+
+                        // Public authentication and Swagger endpoints
+                        .requestMatchers(
+                                "/api/auth/**",
+                                "/swagger-ui.html",
+                                "/swagger-ui/**",
+                                "/v3/api-docs/**",
+                                "/v3/api-docs"
+                        ).permitAll()
 
                         // Products: USER, MANAGER and ADMIN
                         .requestMatchers("/api/products/**")
@@ -98,6 +108,10 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
                 )
 
+                .addFilterBefore(
+                        apiKeyFilter,
+                        UsernamePasswordAuthenticationFilter.class
+                )
                 .addFilterBefore(
                         jwtFilter,
                         UsernamePasswordAuthenticationFilter.class

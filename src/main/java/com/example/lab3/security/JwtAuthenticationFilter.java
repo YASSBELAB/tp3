@@ -38,8 +38,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String authHeader = request.getHeader("Authorization");
 
-        // No token: continue; Spring Security will return 401
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+        // Already authenticated (e.g., via ApiKeyFilter) or no Bearer token
+        if (SecurityContextHolder.getContext().getAuthentication() != null
+                || authHeader == null
+                || !authHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
             return;
         }
